@@ -14,13 +14,21 @@ input {
 	height: 40px;
 	width: 150px;
 }
-
+#sidebar {
+	position: absolute;
+	right: 35%;
+	width: 350px;
+	font-size: 15px;
+}
 
 </style>
 
 <head>
 <h1>Logic Syllogism Checker</h1>
 </head>
+<div id='sidebar'>
+<strong>NOTE:</strong> Make sure your terms are spelled the exact same way, or else it won't work. For example, instead of "All men are mortal, Socrates is a man, Socrates is mortal" make it "All MAN are mortal, Socrates is a man, Socrates is mortal".
+</div>
 <body>
 <input id='in1' placeholder='All men are mortal'></input> <br/>
 <input id='in2' placeholder='Socrates is a man'></input> <br/>Therefore:<br/>
