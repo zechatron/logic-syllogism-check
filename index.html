@@ -1,0 +1,252 @@
+<style>
+body {
+	font-family: monospace;
+}
+input {
+	font-family: monospace;
+	margin-top: 15px;
+	margin-bottom: 15px;
+	
+	width: 20%;
+	height: 30px;
+}
+#btn {
+	height: 40px;
+	width: 150px;
+}
+
+
+</style>
+
+<head>
+<h1>Logic Syllogism Checker</h1>
+</head>
+<body>
+<input id='in1' placeholder='All men are mortal'></input> <br/>
+<input id='in2' placeholder='Socrates is a man'></input> <br/>Therefore:<br/>
+<input id='in3' placeholder='Socrates is mortal'></input> <br/></br/>
+<button id='btn' onclick='check()'>Check</button>
+<h2>Result: <font id='color' color=red><span id='result'>None</span></font></h2>
+</body>
+
+<script>
+String.prototype.isEmpty = function() {
+    return (this.length === 0 || !this.trim());
+}
+function setColor(color) {
+	document.getElementById('color').setAttribute('color', color);
+}
+function getType(array) {
+	if(array[0].startsWith("all ")) {
+		return ("A");
+	} else if(array[0].startsWith("some ")) {
+		if(array[1].startsWith("not ")) {
+			return("O");
+		} else {
+			return("I");
+		}
+	} else if(array[0].startsWith("no ")) {
+		return ("E");
+	} else {
+		return ("A");
+	}
+}
+function check() {
+	let in1 = document.getElementById('in1').value.toLowerCase();
+	let in2 = document.getElementById('in2').value.toLowerCase();
+	let in3 = document.getElementById('in3').value.toLowerCase();
+	let result = document.getElementById('result');
+
+	if(in1.isEmpty() && in2.isEmpty() && in3.isEmpty()) {
+		result.innerHTML = "Invalid: Empty";
+		setColor('red');
+		return;
+	}
+	
+	var premise1 = (in1.includes(" are ")) ? in1.split(" are ") : (in1.includes(" is a ")) ? in1.split(" is a ") : (in1.includes(" is ")) ? in1.split(" is ") : null;
+	
+	var premise2 = (in2.includes(" are ")) ? in2.split(" are ") : (in2.includes(" is a ")) ? in2.split(" is a ") : (in2.includes(" is ")) ? in2.split(" is ") : null;
+
+	var conclusion = (in3.includes(" are ")) ? in3.split(" are ") : (in3.includes(" is a ")) ? in3.split(" is a ") : (in3.includes(" is ")) ? in3.split(" is ") : null;
+	
+	if(premise1 == null || premise2 == null || conclusion == null) {
+		setColor('red');
+		result.innerHTML = "Error: Malformed premises/conclusion";
+		return;
+	}
+	
+	var type = [getType(premise1), getType(premise2), getType(conclusion)];
+	
+	premise1[0] = (type[0] == "A") ? premise1[0].replace("all ", "") : (type[0] == "E") ? premise1[0].replace("no ", "") : (type[0] == "I" || type[0] == "O") ? premise1[0].replace("some ", "") : "Error";
+	premise1[1] = (type[0] == "O") ? premise1[1].replace("not ", "") : premise1[1];
+	premise2[0] = (type[1] == "A") ? premise2[0].replace("all ", "") : (type[1] == "E") ? premise2[0].replace("no ", "") : (type[1] == "I" || type[1] == "O") ? premise2[0].replace("some ", "") : "Error";
+	premise2[1] = (type[1] == "O") ? premise2[1].replace("not ", "") : premise2[1];
+	conclusion[0] = (type[2] == "A") ? conclusion[0].replace("all ", "") : (type[2] == "E") ? conclusion[0].replace("no ", "") : (type[2] == "I" || type[2] == "O") ? conclusion[0].replace("some ", "") : "Error";
+	conclusion[1] = (type[2] == "O") ? conclusion[1].replace("not ", "") : conclusion[1];
+
+	var mt = [];
+	mt[0] = (premise1[0] == premise2[0]) ? "SUB-SUB" : (premise1[0] == premise2[1]) ? "SUB-PRAE" : (premise1[1] == premise2[0]) ? "PRAE-SUB" : (premise1[1] == premise2[1]) ? "PRAE-PRAE" : "Error";
+	mt[1] = (mt[0].startsWith("SUB")) ? premise1[0] : (mt[0].startsWith("PRAE")) ? premise1[1] : "Error"; 
+	
+	var sn = (conclusion[0] == premise2[0] || conclusion[0] == premise2[1]) ? conclusion[0] : "Error";
+	var sp = (conclusion[1] == premise1[0] || conclusion[1] == premise1[1]) ? conclusion[1] : "Error";
+	
+	if(mt[0] == "Error") {
+		setColor('red');
+		result.innerHTML = "Invalid: Undefined middle term";
+		return;
+	} else if(conclusion[0] == mt[1] || conclusion[1] == mt[1]) {
+		setColor('red');
+		result.innerHTML = "Invalid: Middle term is in conclusion";
+		return;
+	} else if((premise1[0] == mt[1] && premise1[1] == mt[1]) || (premise2[0] == mt[1] && premise2[1] == mt[1])) {
+		setColor('red');
+		result.innerHTML = "Invalid: Middle term appears twice in one premise";
+		return;
+	}
+	
+	if(sn == "Error" || sp == "Error") {
+		setColor('red');
+		result.innerHTML = "Invalid: Malformed conclusion"
+		return;
+	} else if((sn == premise1[0] || sn == premise1[1]) || (sp == premise2[0] || sp == premise2[1])) {
+		setColor('red');
+		result.innerHTML = "Invalid: Double Middle Term?"
+		return;
+	}
+	var type_dist = [];
+	type_dist[0] = (type[0] == "A") ? ["D","U"] : (type[0] == "E") ? ["D","D"] : (type[0] == "I") ? ["U","U"] : (type[0] == "O") ? ["U","D"] : "Error";
+	type_dist[1] = (type[1] == "A") ? ["D","U"] : (type[1] == "E") ? ["D","D"] : (type[1] == "I") ? ["U","U"] : (type[1] == "O") ? ["U","D"] : "Error";
+	type_dist[2] = (type[2] == "A") ? ["D","U"] : (type[2] == "E") ? ["D","D"] : (type[2] == "I") ? ["U","U"] : (type[2] == "O") ? ["U","D"] : "Error";
+	console.log(type_dist);
+	
+	var num = premise1.indexOf(mt[1]);
+	var num2 = premise2.indexOf(mt[1]);
+	if(type_dist[0][num] == "U" && type_dist[1][num2] == "U") {
+		setColor('red');
+		result.innerHTML = "Invalid: Undistributed Middle";
+		return;
+	} 
+	num = premise2.indexOf(sn);
+	num2 = conclusion.indexOf(sn);
+	if(type_dist[1][num] == "U" && type_dist[2][num2] == "D") {
+		setColor('red');
+		result.innerHTML = "Invalid: Illicit Minor";
+		return;
+	}
+	num = premise1.indexOf(sp);
+	num2 = conclusion.indexOf(sp);
+	if(type_dist[0][num] == "U" && type_dist[2][num2] == "D") {
+		setColor('red');
+		result.innerHTML = "Invalid: Illicit Major";
+		return;
+	}
+	if((type[0] == "E" || type[0] == "O") && (type[1] == "E" || type[1] == "O")) {
+		setColor('red');
+		result.innerHTML = "Invalid: All negative premises";
+		return;
+	}
+	// valid check :O
+	var combined = type[0] + type[1] + type[2];
+	if(mt[0] == "SUB-PRAE") {
+		if(combined == "AAA") {
+			setColor("green");
+			result.innerHTML = "Valid: BARBARA";
+			return;
+		} else if(combined == "EAE") {
+			setColor("green");
+			result.innerHTML = "Valid: CELARENT";
+			return;
+		} else if(combined == "AII") {
+			setColor("green");
+			result.innerHTML = "Valid: DARII";
+			return;
+		} else if(combined == "EIO") {
+			setColor("green");
+			result.innerHTML = "Valid: FERIO";
+			return;
+		} 
+		
+	} else if(mt[0] == "PRAE-PRAE") {
+		if(combined == "EAE") {
+			setColor("green");
+			result.innerHTML = "Valid: CESARE";
+			return;
+		} else if(combined == "AEE") {
+			setColor("green");
+			result.innerHTML = "Valid: CAMESTRES";
+			return;
+		} else if(combined == "EIO") {
+			setColor("green");
+			result.innerHTML = "Valid: FESTINO";
+			return;
+		} else if(combined == "AOO") {
+			setColor("green");
+			result.innerHTML = "Valid: BAROCO";
+			return;
+		}
+	} else if(mt[0] == "SUB-SUB") {
+		if(combined == "AAI") {
+			setColor("green");
+			result.innerHTML = "Valid: DARAPTI";
+			return;
+		} else if(combined == "IAI") {
+			setColor("green");
+			result.innerHTML = "Valid: DISAMIS";
+			return;
+		} else if(combined == "AII") {
+			setColor("green");
+			result.innerHTML = "Valid: DATISI";
+			return;
+		} else if(combined == "EAO") {
+			setColor("green");
+			result.innerHTML = "Valid: FELAPTON";
+			return;
+		} else if(combined == "OAO") {
+			setColor("green");
+			result.innerHTML = "Valid: BOCARDO";
+			return;
+		} else if(combined == "EIO") {
+			setColor("green");
+			result.innerHTML = "Valid: FERISON";
+			return;
+		}
+	} else if(mt[0] == "PRAE-SUB") {
+		if(combined == "AAI") {
+			setColor("green");
+			result.innerHTML = "Valid: BRAMANTIP";
+			return;
+		} else if(combined == "AEE") {
+			setColor("green");
+			result.innerHTML = "Valid: CAMENES";
+			return;
+		} else if(combined == "IAI") {
+			setColor("green");
+			result.innerHTML = "Valid: DIMARIS";
+			return;
+		} else if(combined == "EAO") {
+			setColor("green");
+			result.innerHTML = "Valid: FESAPO";
+			return;
+		} else if(combined == "EIO") {
+			setColor("green");
+			result.innerHTML = "Valid: FRESISON";
+			return;
+		}
+		
+	} else {
+		setColor("gray");
+		result.innerHTML = "Unknown";
+		return;
+	}
+	
+	
+	
+}
+//Barbara celarent darii ferio 
+//cesare camestres festino boroco
+//darapti disamis datisi felapton bocardo ferison
+//bramantip camenes dimaris fesapo fresison
+//a du i uu
+//e dd o ud
+</script>
